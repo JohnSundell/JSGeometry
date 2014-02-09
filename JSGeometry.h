@@ -329,4 +329,4 @@ CG_INLINE CGRect JSGRectAlignInRect(CGRect rectA, CGRect rectB, JSGRectAlignment
 #endif
 }
 
-#endif
+#endif // JSGeometry
