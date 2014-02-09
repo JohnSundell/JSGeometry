@@ -3,6 +3,12 @@
 
 #import <CoreGraphics/CGGeometry.h>
 
+#if TARGET_OS_IPHONE
+    #define JSGeometry_EdgeInsetsType UIEdgeInsets
+#else
+    #define JSGeometry_EdgeInsetsType NSEdgeInsets
+#endif
+
 #pragma mark - Enums
 
 /**
@@ -205,7 +211,7 @@ CG_INLINE CGRect JSGRectScale(CGRect rect, CGFloat scaleX, CGFloat scaleY)
  *  @discussion This function always returns the integral rect for the
  *  generated rect.
  */
-CG_INLINE CGRect JSGRectGetCenterInRect(CGRect rectA, CGRect rectB)
+CG_INLINE CGRect JSGRectCenterInRect(CGRect rectA, CGRect rectB)
 {
     rectA.origin = JSGCenterPointForSizeInSize(rectA.size, rectB.size);
     
@@ -213,51 +219,33 @@ CG_INLINE CGRect JSGRectGetCenterInRect(CGRect rectA, CGRect rectB)
 }
 
 /**
- *  Align a rect within another rect, according to a coordinate system origin
+ *  Center a rect horizontally within another rect
  *
- *  @param rectA The rect to center in the other rect
+ *  @param rectA The rect to center horizontally in the other rect
  *  @param rectB The rect in which rectA will be centered
- *  @param alignment The alignment that should be applied to rectA. Multiple alignments
- *  may be combined in a bitmask. If the supplied bitmask contains both a top & bottom
- *  alignment, then only the bottom one will be used. If it contains both a left & right one,
- *  then only the right one will be used.
- *  @param coordinateSystemOrigin The origin of the used coordinate system
  *
- *  @discussion For a simpler version of this function, see JSGRectAlignInRect.
- *
- *  @see JSRectAlignment, JSGCoordinateSystemOrigin
+ *  @discussion This function always returns the integral rect for the
+ *  generated rect.
  */
-CG_INLINE CGRect JSGRectAlignInRectForCoordinateSystemOrigin(CGRect rectA, CGRect rectB, JSGRectAlignment alignment, JSGCoordinateSystemOrigin coordinateSystemOrigin)
+CG_INLINE CGRect JSGRectCenterHorizontallyInRect(CGRect rectA, CGRect rectB)
 {
-    if (alignment & JSGRectAlignmentTop) {
-        switch (coordinateSystemOrigin) {
-            case JSGCoordinateSystemOriginTopLeft:
-                rectA.origin.y = 0;
-                break;
-            case JSGCoordinateSystemOriginBottomLeft:
-                rectA.origin.y = CGRectGetHeight(rectB) - CGRectGetHeight(rectA);
-                break;
-        }
-    }
+    rectA.origin.x = JSGCenterPointForSizeInSize(rectA.size, rectB.size).x;
     
-    if (alignment & JSGRectAlignmentLeft) {
-        rectA.origin.x = 0;
-    }
-    
-    if (alignment & JSGRectAlignmentBottom) {
-        switch (coordinateSystemOrigin) {
-            case JSGCoordinateSystemOriginTopLeft:
-                rectA.origin.y = CGRectGetHeight(rectB) - CGRectGetHeight(rectA);
-                break;
-            case JSGCoordinateSystemOriginBottomLeft:
-                rectA.origin.y = 0;
-                break;
-        }
-    }
-    
-    if (alignment & JSGRectAlignmentRight) {
-        rectA.origin.x = CGRectGetWidth(rectB) - CGRectGetWidth(rectA);
-    }
+    return rectA;
+}
+
+/**
+ *  Center a rect vertically within another rect
+ *
+ *  @param rectA The rect to center vertically in the other rect
+ *  @param rectB The rect in which rectA will be centered
+ *
+ *  @discussion This function always returns the integral rect for the
+ *  generated rect.
+ */
+CG_INLINE CGRect JSGRectCenterVerticallyInRect(CGRect rectA, CGRect rectB)
+{
+    rectA.origin.y = JSGCenterPointForSizeInSize(rectA.size, rectB.size).y;
     
     return rectA;
 }
@@ -265,12 +253,66 @@ CG_INLINE CGRect JSGRectAlignInRectForCoordinateSystemOrigin(CGRect rectA, CGRec
 /**
  *  Align a rect within another rect, according to a coordinate system origin
  *
- *  @param rectA The rect to center in the other rect
- *  @param rectB The rect in which rectA will be centered
+ *  @param rectA The rect to align
+ *  @param rectB The rect in which rectA will be aligned
  *  @param alignment The alignment that should be applied to rectA. Multiple alignments
  *  may be combined in a bitmask. If the supplied bitmask contains both a top & bottom
  *  alignment, then only the bottom one will be used. If it contains both a left & right one,
  *  then only the right one will be used.
+ *  @param insets The insets to apply between rectA and the bounds of rectB. For example, setting
+ *  the top member of the insets to 5 will position rectA 5 points below rectB's top bound.
+ *  @param coordinateSystemOrigin The origin of the used coordinate system.
+ *
+ *  @discussion For a simpler version of this function, see JSGRectAlignInRect.
+ *
+ *  @see JSRectAlignment, JSGCoordinateSystemOrigin
+ */
+CG_INLINE CGRect JSGRectAlignInRectForCoordinateSystemOrigin(CGRect rectA, CGRect rectB, JSGRectAlignment alignment, JSGeometry_EdgeInsetsType insets, JSGCoordinateSystemOrigin coordinateSystemOrigin)
+{
+    if (alignment & JSGRectAlignmentTop) {
+        switch (coordinateSystemOrigin) {
+            case JSGCoordinateSystemOriginTopLeft:
+                rectA.origin.y = insets.top;
+                break;
+            case JSGCoordinateSystemOriginBottomLeft:
+                rectA.origin.y = CGRectGetHeight(rectB) - CGRectGetHeight(rectA) - insets.top;
+                break;
+        }
+    }
+    
+    if (alignment & JSGRectAlignmentLeft) {
+        rectA.origin.x = insets.left;
+    }
+    
+    if (alignment & JSGRectAlignmentBottom) {
+        switch (coordinateSystemOrigin) {
+            case JSGCoordinateSystemOriginTopLeft:
+                rectA.origin.y = CGRectGetHeight(rectB) - CGRectGetHeight(rectA) - insets.bottom;
+                break;
+            case JSGCoordinateSystemOriginBottomLeft:
+                rectA.origin.y = insets.bottom;
+                break;
+        }
+    }
+    
+    if (alignment & JSGRectAlignmentRight) {
+        rectA.origin.x = CGRectGetWidth(rectB) - CGRectGetWidth(rectA) - insets.right;
+    }
+    
+    return rectA;
+}
+
+/**
+ *  Align a rect within another rect
+ *
+ *  @param rectA The rect to align
+ *  @param rectB The rect in which rectA will be aligned
+ *  @param alignment The alignment that should be applied to rectA. Multiple alignments
+ *  may be combined in a bitmask. If the supplied bitmask contains both a top & bottom
+ *  alignment, then only the bottom one will be used. If it contains both a left & right one,
+ *  then only the right one will be used.
+ *  @param insets The insets to apply between rectA and the bounds of rectB. For example, setting
+ *  the top member of the insets to 5 will position rectA 5 points below rectB's top bound.
  *
  *  @discussion This function attempts to guess the origin of the currently used coordinate system,
  *  judging on which platform the code was compiled for. For OSX, a bottom/left coordinate system
@@ -278,12 +320,12 @@ CG_INLINE CGRect JSGRectAlignInRectForCoordinateSystemOrigin(CGRect rectA, CGRec
  *  an origin other than the default/assumed one, please use the JSGRectAlignInRectForCoordinateSystemOrigin
  *  function instead, that lets you specify what coordinate system origin to use.
  */
-CG_INLINE CGRect JSGRectAlignInRect(CGRect rectA, CGRect rectB, JSGRectAlignment alignment)
+CG_INLINE CGRect JSGRectAlignInRect(CGRect rectA, CGRect rectB, JSGRectAlignment alignment, JSGeometry_EdgeInsetsType insets)
 {
 #if TARGET_OS_IPHONE
-    return JSGRectAlignInRectForCoordinateSystemOrigin(rectA, rectB, alignment, JSGCoordinateSystemOriginTopLeft);
+    return JSGRectAlignInRectForCoordinateSystemOrigin(rectA, rectB, alignment, insets, JSGCoordinateSystemOriginTopLeft);
 #else
-    return JSGRectAlignInRectForCoordinateSystemOrigin(rectA, rectB, alignment, JSGCoordinateSystemOriginBottomLeft);
+    return JSGRectAlignInRectForCoordinateSystemOrigin(rectA, rectB, alignment, insets, JSGCoordinateSystemOriginBottomLeft);
 #endif
 }
 
