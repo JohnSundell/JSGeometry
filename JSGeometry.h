@@ -69,6 +69,23 @@ CG_INLINE CGPoint JSGCenterPointForSizeInSize(CGSize sizeA, CGSize sizeB)
     return JSGPointIntegral(centerPoint);
 }
 
+/**
+ *  Return the linear distance between two points
+ *
+ *  @param pointA The first point
+ *  @param pointB The second point
+ *
+ *  @discussion This function always returns the rounded result of
+ *  the distance calculation.
+ */
+CG_INLINE CGFloat JSGDistanceBetweenPoints(CGPoint pointA, CGPoint pointB)
+{
+    CGFloat deltaX = ABS(pointA.x - pointB.x);
+    CGFloat deltaY = ABS(pointA.y - pointB.y);
+    
+    return roundf(sqrtf(powf(deltaX, 2) + powf(deltaY, 2)));
+}
+
 #pragma mark - CGSize functions
 
 /**
